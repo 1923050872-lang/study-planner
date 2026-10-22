@@ -1,23 +1,22 @@
 // src/app/login.tsx
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { Colors, Spacing } from '../constants/theme';
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState('Van Anh');
+  const [password, setPassword] = useState('123456');
 
   const handleLogin = () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ Email và Mật khẩu!');
-      return;
-    }
-    // Giả lập đăng nhập thành công và chuyển về trang chủ
-    Alert.alert('Thành công', 'Đăng nhập thành công!', [
-      { text: 'OK', onPress: () => router.replace('/') }
-    ]);
+    // Chuyển trực tiếp về trang chủ khi nhấn Đăng nhập
+    router.replace('/');
   };
 
   return (
@@ -27,20 +26,16 @@ export default function LoginScreen() {
 
       <TextInput
         style={styles.input}
-        placeholder="Email sinh viên"
-        placeholderTextColor="#888"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
+        value={username}
+        onChangeText={setUsername}
+        placeholder="Tên đăng nhập / Email"
       />
 
       <TextInput
         style={styles.input}
-        placeholder="Mật khẩu"
-        placeholderTextColor="#888"
         value={password}
         onChangeText={setPassword}
+        placeholder="Mật khẩu"
         secureTextEntry
       />
 
@@ -55,37 +50,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: Spacing.four,
-    backgroundColor: Colors.light.background,
+    paddingHorizontal: 24,
+    backgroundColor: '#fff',
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: Colors.light.tint,
+    color: '#2B7BB9',
     textAlign: 'center',
-    marginBottom: Spacing.one,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
     color: '#666',
     textAlign: 'center',
-    marginBottom: Spacing.four,
+    marginBottom: 24,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#CCC',
+    backgroundColor: '#EEF2FF',
     borderRadius: 8,
-    padding: Spacing.three,
-    marginBottom: Spacing.three,
-    backgroundColor: '#FFF',
-    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 15,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E0E7FF',
   },
   button: {
-    backgroundColor: Colors.light.tint,
-    padding: Spacing.three,
+    backgroundColor: '#2B7BB9',
     borderRadius: 8,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginTop: Spacing.two,
+    marginTop: 8,
   },
   buttonText: {
     color: '#FFF',

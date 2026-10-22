@@ -1,115 +1,90 @@
 // src/app/weekly.tsx
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { Colors } from '../constants/theme';
 import { usePlannerData } from '../hooks/usePlannerData';
 
 export default function WeeklyScreen() {
   const router = useRouter();
-  const { courses = [], assignments = [] } = usePlannerData();
-  const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const { courses, assignments } = usePlannerData();
 
-  // Thống kê tiến độ theo môn học
-  const statsPerCourse = useMemo(() => {
-    return (courses as any[]).map((course: any) => {
-      const courseAssignments = (assignments as any[]).filter((a: any) => a.courseId === course.id);
-      const total = courseAssignments.length;
-      const completed = courseAssignments.filter((a: any) => a.status === 'COMPLETED').length;
-      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-      return {
-        ...course,
-        total,
-        completed,
-        percentage,
-      };
-    });
-  }, [courses, assignments]);
-
-  // Lọc bài tập theo môn
-  const filteredAssignments = useMemo(() => {
-    if (!selectedCourseId) return assignments as any[];
-    return (assignments as any[]).filter((a: any) => a.courseId === selectedCourseId);
-  }, [assignments, selectedCourseId]);
+  // Đếm số bài đã xong và tính phần trăm đồng bộ với index.tsx
+  const getCourseStats = (courseId: string) => {
+    const courseAssignments = assignments.filter((a) => a.courseId === courseId);
+    if (courseAssignments.length === 0) return { completed: 0, total: 0, percent: 0 };
+    
+    const completed = courseAssignments.filter((a) => a.status === 'completed').length;
+    
+    const percent = Math.round((completed / courseAssignments.length) * 100);
+    return { completed, total: courseAssignments.length, percent };
+  };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.sectionTitle}>Thống kê tiến độ môn học</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Nút quay lại */}
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Text style={styles.backBtnText}>← Lịch tuần & Thống kê</Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* Thống kê từng môn */}
-      <View style={styles.statsContainer}>
-        {statsPerCourse.map((course: any) => (
-          <TouchableOpacity
-            key={course.id}
-            style={[
-              styles.statCard,
-              selectedCourseId === course.id && styles.selectedCard,
-            ]}
-            onPress={() =>
-              setSelectedCourseId(selectedCourseId === course.id ? null : course.id)
-            }
-          >
-            <View
-              style={[
-                styles.colorBar,
-                { backgroundColor: course.colour || course.color || Colors.light.tint },
-              ]}
-            />
-            <View style={styles.statInfo}>
-              <Text style={styles.courseCode}>{course.code}</Text>
-              <Text style={styles.courseName}>{course.name}</Text>
-              <Text style={styles.statText}>
-                Đã xong: {course.completed}/{course.total} ({course.percentage}%)
+      {/* Phần Thống kê tiến độ */}
+      <Text style={styles.sectionTitle}>Thống kê tiến độ môn học</Text>
+      {courses.map((course) => {
+        const stats = getCourseStats(course.id);
+        return (
+          <View key={course.id} style={[styles.courseCard, { borderLeftColor: course.colour }]}>
+            <Text style={styles.courseCode}>{course.code}</Text>
+            <Text style={styles.courseName}>{course.name}</Text>
+            
+            <View style={styles.progressRow}>
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${stats.percent}%`, backgroundColor: course.colour },
+                  ]}
+                />
+              </View>
+              <Text style={styles.statsText}>
+                Đã xong: {stats.completed}/{stats.total} ({stats.percent}%)
               </Text>
             </View>
-          </TouchableOpacity>
-        ))}
-      </View>
+          </View>
+        );
+      })}
 
-      <View style={styles.headerRow}>
-        <Text style={styles.sectionTitle}>Lịch học & Bài tập trong tuần</Text>
-        {selectedCourseId && (
-          <TouchableOpacity onPress={() => setSelectedCourseId(null)}>
-            <Text style={styles.resetFilterText}>Xem tất cả</Text>
+      {/* Lịch học & Bài tập trong tuần */}
+      <Text style={styles.sectionTitle}>Lịch học & Bài tập trong tuần</Text>
+      {assignments.map((item) => {
+        const isCompleted = item.status === 'completed';
+        return (
+          <TouchableOpacity
+            key={item.id}
+            style={[styles.assignmentCard, isCompleted && styles.completedCard]}
+            onPress={() => router.push(('/assignment/' + item.id) as any)}
+          >
+            <View style={styles.assignmentInfo}>
+              <Text style={styles.courseCodeTag}>{courses.find(c => c.id === item.courseId)?.code}</Text>
+              <Text style={[styles.assignmentTitle, isCompleted && styles.completedText]}>
+                {item.title}
+              </Text>
+              <Text style={styles.assignmentDate}>
+                Hạn chót: {item.dueAt}
+              </Text>
+            </View>
+            <View style={[styles.badge, isCompleted ? styles.badgeSuccess : styles.badgePending]}>
+              <Text style={styles.badgeText}>{isCompleted ? 'Đã xong' : 'Đang chờ'}</Text>
+            </View>
           </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Danh sách bài tập */}
-      {filteredAssignments.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>Không có bài tập nào cho môn này!</Text>
-        </View>
-      ) : (
-        filteredAssignments.map((item: any) => {
-          const course = (courses as any[]).find((c: any) => c.id === item.courseId);
-          const isDone = item.status === 'COMPLETED';
-          return (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.assignmentCard}
-              onPress={() => router.push(`/assignment/${item.id}` as any)}
-            >
-              <View style={styles.assignmentHeader}>
-                <Text style={styles.assignmentCourse}>{course?.code || 'Môn học'}</Text>
-                <Text
-                  style={[
-                    styles.statusBadge,
-                    {
-                      backgroundColor: isDone ? '#E6F4EA' : '#FEF7E0',
-                      color: isDone ? '#137333' : '#B06000',
-                    } as any,
-                  ]}
-                >
-                  {isDone ? 'Hoàn thành' : 'Đang chờ'}
-                </Text>
-              </View>
-              <Text style={styles.assignmentTitle}>{item.title}</Text>
-              <Text style={styles.dueDateText}>Hạn chót: {item.dueAt}</Text>
-            </TouchableOpacity>
-          );
-        })
-      )}
+        );
+      })}
     </ScrollView>
   );
 }
@@ -119,108 +94,110 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.light.background,
   },
-  contentContainer: {
+  content: {
     padding: 16,
   },
-  sectionTitle: {
+  header: {
+    marginBottom: 16,
+  },
+  backBtn: {
+    paddingVertical: 8,
+  },
+  backBtnText: {
     fontSize: 18,
     fontWeight: 'bold',
     color: Colors.light.text,
-    marginBottom: 12,
   },
-  statsContainer: {
-    marginBottom: 16,
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.light.text,
+    marginVertical: 12,
   },
-  statCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFF',
+  courseCard: {
+    backgroundColor: Colors.light.card,
+    padding: 16,
     borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#EEE',
-    alignItems: 'center',
-  },
-  selectedCard: {
-    borderColor: Colors.light.tint,
-    borderWidth: 2,
-  },
-  colorBar: {
-    width: 6,
-    height: '100%',
-    borderRadius: 3,
-    marginRight: 12,
-  },
-  statInfo: {
-    flex: 1,
+    marginBottom: 12,
+    borderLeftWidth: 4,
   },
   courseCode: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#888',
+    color: '#666',
   },
   courseName: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.light.text,
-  },
-  statText: {
-    fontSize: 13,
-    color: '#555',
     marginTop: 2,
   },
-  headerRow: {
+  progressRow: {
+    marginTop: 8,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  statsText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+  },
+  assignmentCard: {
+    backgroundColor: Colors.light.card,
+    padding: 16,
+    borderRadius: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
   },
-  resetFilterText: {
-    fontSize: 14,
-    color: Colors.light.tint,
-    fontWeight: '600',
+  completedCard: {
+    opacity: 0.6,
   },
-  assignmentCard: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#EEE',
+  assignmentInfo: {
+    flex: 1,
   },
-  assignmentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  assignmentCourse: {
+  courseCodeTag: {
     fontSize: 12,
     fontWeight: 'bold',
     color: Colors.light.tint,
   },
-  statusBadge: {
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    overflow: 'hidden',
-    fontWeight: '600',
-  },
   assignmentTitle: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '500',
     color: Colors.light.text,
-    marginBottom: 4,
+    marginTop: 2,
   },
-  dueDateText: {
+  completedText: {
+    textDecorationLine: 'line-through',
+  },
+  assignmentDate: {
     fontSize: 12,
     color: '#888',
+    marginTop: 2,
   },
-  emptyBox: {
-    padding: 16,
-    alignItems: 'center',
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
   },
-  emptyText: {
-    color: '#888',
+  badgePending: {
+    backgroundColor: '#FEF3C7',
+  },
+  badgeSuccess: {
+    backgroundColor: '#DCFCE7',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

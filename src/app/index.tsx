@@ -23,31 +23,78 @@ export default function HomeScreen() {
     );
   }
 
+  // Tính toán phần trăm tiến độ hoàn thành theo từng môn học (Computed Progress)
+  const getCourseProgress = (courseId: string) => {
+    const courseAssignments = assignments.filter((a) => a.courseId === courseId);
+    if (courseAssignments.length === 0) return 0;
+    const completed = courseAssignments.filter((a) => a.status === 'completed').length;
+    return Math.round((completed / courseAssignments.length) * 100);
+  };
+
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Header với nút Thêm mới */}
+      {/* Header với các nút chuyển trang */}
       <View style={styles.headerRow}>
         <View>
           <Text style={styles.headerTitle}>Study Planner 📚</Text>
           <Text style={styles.headerSubtitle}>Quản lý môn học & bài tập</Text>
         </View>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => router.push('/add-assignment')}
-        >
-          <Text style={styles.addBtnText}>+ Thêm mới</Text>
-        </TouchableOpacity>
+
+        <View style={styles.actionButtons}>
+          {/* Nút Xem Lịch tuần */}
+          <TouchableOpacity
+            style={styles.weeklyBtn}
+            onPress={() => router.push('/weekly')}
+          >
+            <Text style={styles.weeklyBtnText}>📅 Lịch tuần</Text>
+          </TouchableOpacity>
+
+          {/* Nút Đăng nhập */}
+          <TouchableOpacity
+            style={styles.loginBtn}
+            onPress={() => router.push('/login')}
+          >
+            <Text style={styles.loginBtnText}>Đăng nhập</Text>
+          </TouchableOpacity>
+
+          {/* Nút Đăng xuất */}
+          <TouchableOpacity
+            style={styles.logoutBtn}
+            onPress={() => router.replace('/login')}
+          >
+            <Text style={styles.logoutBtnText}>Đăng xuất</Text>
+          </TouchableOpacity>
+
+          {/* Nút Thêm mới bài tập */}
+          <TouchableOpacity
+            style={styles.addBtn}
+            onPress={() => router.push('/add-assignment')}
+          >
+            <Text style={styles.addBtnText}>+ Thêm mới</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* Danh sách Môn học */}
-      <Text style={styles.sectionTitle}>Môn học gần đây ({courses.length})</Text>
+      {/* Mục Thống kê Tiến độ Môn học (% Hoàn thành) */}
+      <Text style={styles.sectionTitle}>Thống kê tiến độ môn học ({courses.length})</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.coursesScroll}>
-        {courses.map((course) => (
-          <View key={course.id} style={[styles.courseCard, { borderLeftColor: course.colour }]}>
-            <Text style={styles.courseCode}>{course.code}</Text>
-            <Text style={styles.courseName}>{course.name}</Text>
-          </View>
-        ))}
+        {courses.map((course) => {
+          const progress = getCourseProgress(course.id);
+          return (
+            <View key={course.id} style={[styles.courseCard, { borderLeftColor: course.colour }]}>
+              <Text style={styles.courseCode}>{course.code}</Text>
+              <Text style={styles.courseName}>{course.name}</Text>
+              
+              {/* Thanh hiển thị phần trăm */}
+              <View style={styles.progressContainer}>
+                <View style={styles.progressBarBackground}>
+                  <View style={[styles.progressBarFill, { width: `${progress}%`, backgroundColor: course.colour }]} />
+                </View>
+                <Text style={styles.progressText}>{progress}% hoàn thành</Text>
+              </View>
+            </View>
+          );
+        })}
       </ScrollView>
 
       {/* Danh sách Bài tập / Deadline */}
@@ -108,6 +155,44 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: Spacing.one,
   },
+  actionButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  weeklyBtn: {
+    backgroundColor: '#059669',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 8,
+  },
+  weeklyBtnText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  loginBtn: {
+    backgroundColor: '#E0E7FF',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 8,
+  },
+  loginBtnText: {
+    color: '#4338CA',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  logoutBtn: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.two,
+    borderRadius: 8,
+  },
+  logoutBtnText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '600',
+  },
   addBtn: {
     backgroundColor: Colors.light.tint,
     paddingHorizontal: Spacing.three,
@@ -133,7 +218,7 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     borderRadius: 8,
     marginRight: Spacing.three,
-    width: 140,
+    width: 170,
     borderLeftWidth: 4,
   },
   courseCode: {
@@ -146,6 +231,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.light.text,
     marginTop: Spacing.one,
+  },
+  progressContainer: {
+    marginTop: Spacing.three,
+  },
+  progressBarBackground: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 4,
+    fontWeight: '500',
   },
   assignmentCard: {
     backgroundColor: Colors.light.card,
