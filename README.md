@@ -1,4 +1,8 @@
 # 📚 Study Planner - Ứng dụng Quản lý Học tập Sinh viên
+### 👥 THÔNG TIN THÀNH VIÊN NHÓM:
+- **Thành viên 1:** Trần Ngọc Diễm Quỳnh - 1923050879 
+- **Thành viên 2:**  Đặng Lê Kim Thoa - 1923050527
+- **Thành viên 3:** Phạm Nguyễn Vân Anh - 1923050872
 
 Ứng dụng giúp sinh viên quản lý từ 5–7 môn học, theo dõi bài tập, hạn nộp (deadline), lịch tuần và thống kê tiến độ học tập.
 
